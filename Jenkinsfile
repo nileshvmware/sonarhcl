@@ -24,8 +24,20 @@ booleanParam{
     description: 'click checkbox to run the Sonarqube scans'
 
 pipeline {
-    agent {
-        docker {
+    agent any
+
+    tools {
+        maven 'M3'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/nileshvmware/sonarhcl.git'
+            }
+        }
+
+    docker {
             image 'maven:3-alpine' 
             args '-v /root/.m2:/root/.m2' 
         }
@@ -35,8 +47,9 @@ pipeline {
             steps {
                 sh 'mvn -B -DskipTests clean package' 
             }
-             stages {
-          stage("build & SonarQube analysis") {
+             
+		
+    stage("build & SonarQube analysis") {
             agent any
             steps {
               withSonarQubeEnv('My SonarQube Server') {
@@ -44,14 +57,13 @@ pipeline {
               }
             }
           }
-          stage("Quality Gate") {
+    stage("Quality Gate") {
             steps {
               timeout(time: 1, unit: 'HOURS') {
                 waitForQualityGate abortPipeline: true
               }
             }
-          }
-        }
+                
         }
     }
 }
